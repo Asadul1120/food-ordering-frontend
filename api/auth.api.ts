@@ -1,5 +1,12 @@
 import apiClient from "@/lib/apiClient";
-import { LoginPayload, RegisterPayload } from "@/types/auth.type";
+import type {
+  ApiResponse,
+  AuthUser,
+  LoginPayload,
+  RegisterPayload,
+} from "@/types/auth.type";
+
+
 
 export const userRegister = (payload: RegisterPayload) => {
   return apiClient("/api/v1/auth/register", {
@@ -16,7 +23,7 @@ export const userLogin = (payload: LoginPayload) => {
 };
 
 export const getMe = () => {
-  return apiClient("/api/v1/auth/me", {
+  return apiClient<ApiResponse<AuthUser>>("/api/v1/auth/me", {
     method: "GET",
   });
 };

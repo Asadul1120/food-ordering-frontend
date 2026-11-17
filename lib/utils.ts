@@ -27,11 +27,14 @@ export function getFieldError(errors: readonly unknown[]): string | undefined {
 export const roleRoutes = (role: string) => {
   switch (role) {
     case "ADMIN":
-      return "dashboard/admin";
+      return "/dashboard/admin";
+
     case "STAFF":
-      return "dashboard/staff";
+      return "/dashboard/staff";
+
     case "CUSTOMER":
       return "/";
+
     default:
       return "/";
   }
