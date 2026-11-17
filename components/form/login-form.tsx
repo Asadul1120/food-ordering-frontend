@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useState } from "react";
@@ -8,46 +7,7 @@ import { toast } from "sonner";
 
 import { useLogin } from "@/hooks/auth.hook";
 import { loginSchema } from "@/validation/auth.validation";
-
-function getErrorMessage(error: unknown): string {
-  if (
-    error &&
-    typeof error === "object" &&
-    "data" in error
-  ) {
-    const data = (
-      error as { data?: { message?: string } }
-    ).data;
-
-    if (data?.message) return data.message;
-  }
-
-  return error instanceof Error
-    ? error.message
-    : "Something went wrong";
-}
-
-function getFieldError(
-  errors: readonly unknown[],
-): string | undefined {
-  const error = errors[0];
-
-  if (!error) return undefined;
-
-  if (typeof error === "string") {
-    return error;
-  }
-
-  if (
-    typeof error === "object" &&
-    error !== null &&
-    "message" in error
-  ) {
-    return String(error.message);
-  }
-
-  return "Invalid value";
-}
+import { getErrorMessage, getFieldError, roleRoutes } from "@/lib/utils";
 
 export default function LoginForm() {
   const router = useRouter();
@@ -68,11 +28,11 @@ export default function LoginForm() {
 
     onSubmit: async ({ value }) => {
       try {
-        await loginMutation.mutateAsync(value);
+        const res = await loginMutation.mutateAsync(value);
 
-        toast.success("Welcome back!");
-
-        router.replace("/");
+        toast.success(res.message);
+        router.push(roleRoutes(res.data.role));
+        
       } catch (error) {
         toast.error(getErrorMessage(error));
       }
@@ -92,9 +52,7 @@ export default function LoginForm() {
       {/* Email */}
       <form.Field name="email">
         {(field) => {
-          const error = getFieldError(
-            field.state.meta.errors,
-          );
+          const error = getFieldError(field.state.meta.errors);
 
           return (
             <div>
@@ -113,13 +71,9 @@ export default function LoginForm() {
                 placeholder=""
                 value={field.state.value}
                 onBlur={field.handleBlur}
-                onChange={(event) =>
-                  field.handleChange(event.target.value)
-                }
+                onChange={(event) => field.handleChange(event.target.value)}
                 aria-invalid={Boolean(error)}
-                aria-describedby={
-                  error ? "email-error" : undefined
-                }
+                aria-describedby={error ? "email-error" : undefined}
                 className="h-[42px] w-full rounded-[13px] border border-[#d5ddd8] bg-white px-3 text-[14px] text-gray-900 outline-none transition focus:border-[#086442] focus:ring-2 focus:ring-[#086442]/10"
               />
 
@@ -140,9 +94,7 @@ export default function LoginForm() {
       {/* Password */}
       <form.Field name="password">
         {(field) => {
-          const error = getFieldError(
-            field.state.meta.errors,
-          );
+          const error = getFieldError(field.state.meta.errors);
 
           return (
             <div>
@@ -157,34 +109,20 @@ export default function LoginForm() {
                 <input
                   id="password"
                   name={field.name}
-                  type={
-                    showPassword ? "text" : "password"
-                  }
+                  type={showPassword ? "text" : "password"}
                   autoComplete="current-password"
                   value={field.state.value}
                   onBlur={field.handleBlur}
-                  onChange={(event) =>
-                    field.handleChange(event.target.value)
-                  }
+                  onChange={(event) => field.handleChange(event.target.value)}
                   aria-invalid={Boolean(error)}
-                  aria-describedby={
-                    error ? "password-error" : undefined
-                  }
+                  aria-describedby={error ? "password-error" : undefined}
                   className="h-[42px] w-full rounded-[13px] border border-[#d5ddd8] bg-white px-3 pr-16 text-[14px] text-gray-900 outline-none transition focus:border-[#086442] focus:ring-2 focus:ring-[#086442]/10"
                 />
 
                 <button
                   type="button"
-                  onClick={() =>
-                    setShowPassword(
-                      (previous) => !previous,
-                    )
-                  }
-                  aria-label={
-                    showPassword
-                      ? "Hide password"
-                      : "Show password"
-                  }
+                  onClick={() => setShowPassword((previous) => !previous)}
+                  aria-label={showPassword ? "Hide password" : "Show password"}
                   aria-pressed={showPassword}
                   className="absolute right-3 top-1/2 -translate-y-1/2 text-[12px] font-semibold text-[#086442] hover:text-[#043b29]"
                 >
@@ -212,9 +150,7 @@ export default function LoginForm() {
           id="remember"
           type="checkbox"
           checked={rememberMe}
-          onChange={(event) =>
-            setRememberMe(event.target.checked)
-          }
+          onChange={(event) => setRememberMe(event.target.checked)}
           className="h-[13px] w-[13px] cursor-pointer accent-[#086442]"
         />
 
@@ -232,9 +168,7 @@ export default function LoginForm() {
         disabled={loginMutation.isPending}
         className="flex h-[44px] w-full items-center justify-center rounded-full bg-[#086442] text-[14px] font-semibold text-white transition duration-200 hover:bg-[#064e34] active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-60"
       >
-        {loginMutation.isPending
-          ? "Signing in..."
-          : "Sign in"}
+        {loginMutation.isPending ? "Signing in..." : "Sign in"}
       </button>
     </form>
   );
