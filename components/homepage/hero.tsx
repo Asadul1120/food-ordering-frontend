@@ -102,7 +102,7 @@ const Hero = () => {
             </h1>
 
             <p className="mt-6 max-w-[500px] text-[15px] leading-7 text-gray-700">
-              Freshly made food and handcrafted coffee from Savar&apos;s favorite
+              Side Kitchen made food and handcrafted coffee from Savar&apos;s favorite
               fusion café, delivered to your door.
             </p>
 
@@ -132,12 +132,12 @@ const Hero = () => {
 
               <span className="flex items-center gap-2">
                 <span className="h-1.5 w-1.5 rounded-full bg-[#ffcc00]" />
-                3 PM – 11 PM daily
+                10 AM – 10 PM daily
               </span>
 
               <span className="flex items-center gap-2">
                 <span className="h-1.5 w-1.5 rounded-full bg-[#ffcc00]" />
-                Delivery in Savar
+                Delivery in Rayer Bazar, Mohammadpur, Dhaka-1209.
               </span>
 
               <span className="flex items-center gap-2">

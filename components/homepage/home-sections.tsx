@@ -196,7 +196,7 @@ const HomeSections = () => {
           <div className="mb-7 flex flex-wrap items-center justify-between gap-3 sm:flex-nowrap">
             <div>
               <h2 className="text-2xl font-bold text-[#063b29]">
-                Freshlya Favorites
+               Side Kitchen Favorites
               </h2>
               <p className="mt-1 text-sm text-gray-500">
                 Handpicked meals and café favorites
@@ -337,7 +337,7 @@ const HomeSections = () => {
         <div className="mx-auto max-w-[1155px]">
 
           <h2 className="mb-8 text-center text-2xl font-bold text-[#063b29]">
-            Why Freshlya
+            Why Side Kitchen
           </h2>
 
           <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
@@ -382,7 +382,7 @@ const HomeSections = () => {
                     Address
                   </h3>
                   <p className="mt-1 text-gray-600">
-                    Freshlya Fusion Café, Thana Road, Savar, Dhaka
+                  Side Kitchen, Rayer Bazar, Mohammadpur, Dhaka.
                   </p>
                 </div>
 
@@ -391,7 +391,7 @@ const HomeSections = () => {
                     Hours
                   </h3>
                   <p className="mt-1 text-gray-600">
-                    Every day · 3 PM – 11 PM
+                    Every day · 10 AM – 10 PM
                   </p>
                 </div>
 
@@ -400,7 +400,7 @@ const HomeSections = () => {
                     Delivery
                   </h3>
                   <p className="mt-1 text-gray-600">
-                    Savar, Dhaka
+                    Rayer Bazar, Mohammadpur, Dhaka-1209
                   </p>
                 </div>
               </div>

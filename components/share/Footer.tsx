@@ -87,7 +87,7 @@ const Footer = () => {
               </span>
 
               <span>
-                Freshlya Fusion Café, Thana Road, Savar, Dhaka
+                Side Kitchen, Rayer Bazar, Mohammadpur, Dhaka-1209
               </span>
             </div>
 
@@ -102,7 +102,7 @@ const Footer = () => {
               </span>
 
               <p>
-                Every day · 3 PM–11 PM
+                Every day · 10 AM–10 PM
                 <span className="text-gray-400">
                   {" "}· pre-orders anytime
                 </span>
@@ -120,7 +120,7 @@ const Footer = () => {
               </span>
 
               <span>
-                Home delivery across Savar
+                Home delivery across Rayer Bazar, Mohammadpur, Dhaka-1209
               </span>
             </div>
 
@@ -264,7 +264,7 @@ const Footer = () => {
       <div className="border-t border-[#294236]">
         <div className="mx-auto flex max-w-[1220px] flex-col items-center justify-between gap-4 px-4 py-4 text-xs text-gray-300 md:flex-row">
           <p>
-            © 2026 Freshlya Fusion Café. All rights reserved.
+            © 2026 Side Kitchen. All rights reserved.
           </p>
 
           <div className="flex flex-wrap items-center justify-center gap-4">
