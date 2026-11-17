@@ -1,11 +1,22 @@
+"use client";
+
+import { useCallback, useState } from "react";
 import Link from "next/link";
-import { ShoppingCart, User } from "lucide-react";
+import { ShoppingCart, Menu } from "lucide-react";
 
 import Logo from "./logo";
 import CartCount from "./cart-count";
+import HeaderAccount from "./header-account";
+import MobileMenu from "./mobile-menu";
 import HeaderSearchForm from "@/components/share/HeaderSearchForm";
 
 const Header = () => {
+  const [menuOpen, setMenuOpen] = useState(false);
+
+  const closeMenu = useCallback(() => {
+    setMenuOpen(false);
+  }, []);
+
   return (
     <header className="w-full text-white">
       {/* Top Bar */}
@@ -42,15 +53,27 @@ const Header = () => {
       {/* Main Header */}
       <div className="bg-[#031f14]">
         <div className="mx-auto flex min-h-[78px] max-w-[1220px] flex-wrap items-center justify-between gap-3 px-4 py-3 md:h-[78px] md:flex-nowrap md:gap-5 md:py-0">
-          {/* Logo */}
+          {/* Mobile Menu - Left Side */}
+          <button
+            type="button"
+            aria-label="Open menu"
+            aria-expanded={menuOpen}
+            aria-haspopup="dialog"
+            onClick={() => setMenuOpen(true)}
+            className="flex shrink-0 items-center justify-center text-white md:hidden"
+          >
+            <Menu size={26} strokeWidth={2} />
+          </button>
+
+          {/* Logo - Original Design */}
           <Logo />
 
-          {/* Search Bar */}
+          {/* Search Bar - Original Design */}
           <HeaderSearchForm placeholder="Search biryani, coffee, sandwich..." />
 
           {/* Right Actions */}
           <div className="ml-auto flex shrink-0 items-center gap-3 md:gap-6">
-            {/* Home */}
+            {/* Home - Desktop Only */}
             <Link
               href="/"
               className="hidden items-center gap-2 text-sm font-semibold hover:text-yellow-400 md:flex"
@@ -58,7 +81,7 @@ const Header = () => {
               Home
             </Link>
 
-            {/* Foods */}
+            {/* Foods - Desktop Only */}
             <Link
               href="/foods"
               className="hidden items-center gap-2 text-sm font-semibold hover:text-yellow-400 md:flex"
@@ -66,7 +89,7 @@ const Header = () => {
               Foods
             </Link>
 
-            {/* Contact Us */}
+            {/* Contact - Desktop Only */}
             <Link
               href="/"
               className="hidden items-center gap-2 text-sm font-semibold hover:text-yellow-400 md:flex"
@@ -74,17 +97,12 @@ const Header = () => {
               Contact Us
             </Link>
 
-            {/* Sign In */}
-            <Link
-              href="/login"
-              className="flex items-center gap-2 text-sm font-semibold hover:text-yellow-400"
-            >
-              <User size={20} strokeWidth={2} aria-hidden="true" />
+            {/* User Dropdown - Desktop Only */}
+            <div className="hidden md:block">
+              <HeaderAccount />
+            </div>
 
-              <span className="hidden sm:inline">Sign in</span>
-            </Link>
-
-            {/* Shopping Cart */}
+            {/* Shopping Cart - Original Design */}
             <Link
               href="/cart"
               aria-label="Shopping cart"
@@ -92,12 +110,14 @@ const Header = () => {
             >
               <ShoppingCart size={21} strokeWidth={2} aria-hidden="true" />
 
-              {/* Dynamic Cart Count */}
               <CartCount />
             </Link>
           </div>
         </div>
       </div>
+
+      {/* Mobile Drawer */}
+      {menuOpen && <MobileMenu onClose={closeMenu} />}
     </header>
   );
 };

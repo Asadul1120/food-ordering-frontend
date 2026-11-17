@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 import FoodCard from "@/components/foods/food-card";
 import FoodPriceForm from "@/components/form/food-price-form";
@@ -82,6 +82,14 @@ export default function FoodsPage() {
     setCategoryId(id);
     setPage(1);
   };
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const selectedCategory = params.get("categoryId") ?? "";
+
+    setCategoryId(selectedCategory);
+    setPage(1);
+  }, []);
 
   return (
     <div className="min-h-screen bg-[#faf7f0] text-[#052b24]">
