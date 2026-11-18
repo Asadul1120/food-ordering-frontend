@@ -1,17 +1,18 @@
 "use client";
 
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import type { ReactNode } from "react";
 
 import {
   LayoutDashboard,
   ClipboardList,
+  Package,
   ExternalLink,
   LogOut,
   ShieldCheck,
+  FolderTree,
 } from "lucide-react";
-
 import { toast } from "sonner";
 
 import { useGetMe, useLogout } from "@/hooks/auth.hook";
@@ -19,10 +20,21 @@ import { getErrorMessage } from "@/lib/utils";
 
 export default function AdminShell({ children }: { children: ReactNode }) {
   const router = useRouter();
+  const pathname = usePathname();
+
   const userQuery = useGetMe();
   const logout = useLogout();
 
   const user = userQuery.data?.data;
+
+  const isDashboard = pathname === "/dashboard/admin";
+  const isCategories = pathname.startsWith("/dashboard/admin/categories");
+
+  const isOrders = pathname.startsWith("/dashboard/admin/orders");
+
+  const activeClass = "bg-[#ffcc00] text-[#052b24] font-semibold";
+
+  const inactiveClass = "text-white hover:bg-white/10";
 
   const handleLogout = async () => {
     try {
@@ -34,6 +46,7 @@ export default function AdminShell({ children }: { children: ReactNode }) {
     }
   };
 
+  // Session loading
   if (userQuery.isPending) {
     return (
       <div
@@ -45,6 +58,7 @@ export default function AdminShell({ children }: { children: ReactNode }) {
     );
   }
 
+  // User is not authenticated
   if (userQuery.isError || !user) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-[#faf7f0] p-6 text-[#052b24]">
@@ -77,6 +91,7 @@ export default function AdminShell({ children }: { children: ReactNode }) {
     );
   }
 
+  // Admin role protection
   if (user.role !== "ADMIN" || !user.isActive) {
     return (
       <div className="flex min-h-screen flex-col items-center justify-center gap-4 bg-[#faf7f0] p-6 text-[#052b24]">
@@ -96,7 +111,7 @@ export default function AdminShell({ children }: { children: ReactNode }) {
 
   return (
     <div className="min-h-screen bg-[#faf7f0] text-[#052b24]">
-      {/* Desktop sidebar */}
+      {/* Desktop Sidebar */}
       <aside className="fixed inset-y-0 left-0 hidden w-[240px] flex-col bg-[#031f14] px-5 py-7 text-white lg:flex">
         <Link href="/dashboard/admin" className="text-2xl font-bold">
           Side Kitchen
@@ -107,21 +122,51 @@ export default function AdminShell({ children }: { children: ReactNode }) {
           ADMIN WORKSPACE
         </p>
 
+        {/* Sidebar Navigation */}
         <nav aria-label="Admin navigation" className="mt-10 space-y-2">
           <Link
             href="/dashboard/admin"
-            className="flex items-center gap-3 rounded-xl bg-[#ffcc00] px-4 py-3 text-sm font-semibold text-[#052b24]"
+            aria-current={isDashboard ? "page" : undefined}
+            className={`flex items-center gap-3 rounded-xl px-4 py-3 text-sm ${
+              isDashboard ? activeClass : inactiveClass
+            }`}
           >
             <LayoutDashboard size={18} />
             Dashboard
           </Link>
 
           <Link
-            href="/dashboard/admin#orders"
-            className="flex items-center gap-3 rounded-xl px-4 py-3 text-sm hover:bg-white/10"
+            href="/dashboard/admin/orders"
+            aria-current={isOrders ? "page" : undefined}
+            className={`flex items-center gap-3 rounded-xl px-4 py-3 text-sm ${
+              isOrders ? activeClass : inactiveClass
+            }`}
           >
             <ClipboardList size={18} />
             Manage orders
+          </Link>
+
+          {/* Category Management */}
+          <Link
+            href="/dashboard/admin/categories"
+            aria-current={isCategories ? "page" : undefined}
+            className={`flex items-center gap-3 rounded-xl px-4 py-3 text-sm ${
+              isCategories
+                ? "bg-[#ffcc00] font-semibold text-[#052b24]"
+                : "text-white hover:bg-white/10"
+            }`}
+          >
+            <FolderTree size={18} />
+            Manage categories
+          </Link>
+
+          {/* Product Management */}
+          <Link
+            href="/dashboard/admin/products"
+            className="flex items-center gap-3 rounded-xl px-4 py-3 text-sm hover:bg-white/10"
+          >
+            <Package size={18} />
+            Manage products
           </Link>
 
           <Link
@@ -133,6 +178,7 @@ export default function AdminShell({ children }: { children: ReactNode }) {
           </Link>
         </nav>
 
+        {/* Logged-in Admin */}
         <div className="mt-auto border-t border-white/10 pt-5">
           <p className="truncate text-sm font-semibold">{user.name}</p>
 
@@ -140,8 +186,9 @@ export default function AdminShell({ children }: { children: ReactNode }) {
         </div>
       </aside>
 
+      {/* Main Area */}
       <div className="lg:pl-[240px]">
-        {/* Header */}
+        {/* Dashboard Header */}
         <header className="border-b border-[#e4ebe5] bg-white px-4 py-4 sm:px-8">
           <div className="flex items-center justify-between gap-4">
             <div>
@@ -168,19 +215,48 @@ export default function AdminShell({ children }: { children: ReactNode }) {
             </div>
           </div>
 
-          {/* Mobile navigation */}
+          {/* Mobile Navigation */}
           <nav
             aria-label="Mobile admin navigation"
-            className="mt-4 flex gap-5 text-sm lg:hidden"
+            className="mt-4 flex gap-5 overflow-x-auto whitespace-nowrap text-sm lg:hidden"
           >
-            <Link href="/dashboard/admin">Dashboard</Link>
+            <Link
+              href="/dashboard/admin"
+              aria-current={isDashboard ? "page" : undefined}
+              className={isDashboard ? "font-semibold text-[#08613f]" : ""}
+            >
+              Dashboard
+            </Link>
 
-            <Link href="/dashboard/admin#orders">Orders</Link>
+            <Link
+              href="/dashboard/admin/orders"
+              aria-current={isOrders ? "page" : undefined}
+              className={isOrders ? "font-semibold text-[#08613f]" : ""}
+            >
+              Orders
+            </Link>
+
+            <Link
+              href="/dashboard/admin/categories"
+              aria-current={isCategories ? "page" : undefined}
+              className={isCategories ? "font-semibold text-[#08613f]" : ""}
+            >
+              Categories
+            </Link>
+
+            <Link
+              href="/dashboard/admin/products"
+              className="flex items-center gap-2"
+            >
+              <Package size={16} />
+              Products
+            </Link>
 
             <Link href="/foods">View menu</Link>
           </nav>
         </header>
 
+        {/* Page Content */}
         <main className="mx-auto max-w-[1500px] p-4 sm:p-8">{children}</main>
       </div>
     </div>
