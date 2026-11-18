@@ -119,34 +119,49 @@ export const useCart = () => {
   };
 
   // Add product to cart
-  const addToCart = (product: Product) => {
+
+  const addToCart = (product: Product, quantity = 1) => {
+    // Unavailable products cannot be added
     if (!product.isAvailable) {
       throw new Error("This food is sold out");
     }
 
+    // Validate quantity
+    if (!Number.isInteger(quantity) || quantity < 1 || quantity > 99) {
+      throw new Error("Please choose a quantity between 1 and 99");
+    }
+
+    // Get existing cart
     const cart = getStoredCart();
 
+    // Find the product in the cart
     const existing = cart.find((item) => item.productId === product.id);
 
-    if (existing) {
-      if (existing.quantity >= 99) {
-        throw new Error("Maximum quantity is 99");
-      }
+    const currentQuantity = existing?.quantity ?? 0;
 
-      existing.quantity += 1;
+    // Maximum 99 items of each product
+    if (currentQuantity + quantity > 99) {
+      throw new Error("Maximum quantity is 99 per product");
+    }
+
+    if (existing) {
+      // Update existing product quantity
+      existing.quantity += quantity;
       existing.name = product.name;
       existing.price = product.price;
       existing.imageUrl = product.imageUrl;
     } else {
+      // Add a new product
       cart.push({
         productId: product.id,
         name: product.name,
         price: product.price,
         imageUrl: product.imageUrl,
-        quantity: 1,
+        quantity,
       });
     }
 
+    // Save and update cart count
     saveCart(cart);
   };
 

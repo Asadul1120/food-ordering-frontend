@@ -12,10 +12,21 @@ export const getProducts = (query: ProductQuery, signal?: AbortSignal) => {
   });
 };
 
-// Get products marked as featured by Admin
+// Get featured products
 export const getFeaturedProducts = (signal?: AbortSignal) => {
   return apiClient<ApiResponse<Product[]>>("/api/v1/products/featured", {
     method: "GET",
     signal,
   });
+};
+
+// Get a single product using its ID
+export const getProductById = (id: string, signal?: AbortSignal) => {
+  return apiClient<ApiResponse<Product>>(
+    `/api/v1/products/${encodeURIComponent(id)}`,
+    {
+      method: "GET",
+      signal,
+    },
+  );
 };

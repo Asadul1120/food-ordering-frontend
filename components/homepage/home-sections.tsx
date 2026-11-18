@@ -291,9 +291,7 @@ const HomeSections = () => {
 
             {!productsLoading &&
               products.map((product) => {
-                const productHref = `/foods?categoryId=${encodeURIComponent(
-                  product.categoryId,
-                )}`;
+               const productHref = `/foods/${product.id}`;
 
                 const soldOut = !product.isAvailable;
 
