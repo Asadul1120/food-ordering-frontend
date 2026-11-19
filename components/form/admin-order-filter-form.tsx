@@ -80,7 +80,7 @@ export default function AdminOrderFilterForm({
             }
             className="h-10 rounded-xl border border-[#d5ddd8] bg-white px-3 text-sm outline-none focus:border-[#08613f]"
           >
-            <option value="">All statuses</option>
+            <option value="">All status</option>
 
             {orderStatuses.map((status) => (
               <option key={status} value={status}>

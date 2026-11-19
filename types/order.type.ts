@@ -10,6 +10,7 @@ export interface CreateOrderPayload {
   orderNote?: string;
   couponCode?: string;
   paymentMethod: PaymentMethod;
+
   items: {
     productId: string;
     quantity: number;
@@ -24,6 +25,12 @@ export interface CreatedOrder {
   discountAmount: string;
   totalAmount: string;
   orderStatus: string;
+  guestToken?: string | null;
+}
+
+export interface InitiatePaymentPayload {
+  orderId: string;
+  guestToken?: string | null;
 }
 
 export interface PaymentInitiation {

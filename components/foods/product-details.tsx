@@ -215,7 +215,7 @@ export default function ProductDetails({ id }: { id: string }) {
       {/* CATEGORY NAVIGATION */}
       {/* ==================================== */}
 
-      <nav
+      {/* <nav
         aria-label="Food categories"
         className="border-b border-[#e9eee9] bg-white"
       >
@@ -241,7 +241,7 @@ export default function ProductDetails({ id }: { id: string }) {
             <span>Contact</span>
           </div>
         </div>
-      </nav>
+      </nav> */}
 
       {/* ==================================== */}
       {/* MAIN CONTENT */}

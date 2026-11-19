@@ -3,7 +3,6 @@
 import { useState } from "react";
 import Link from "next/link";
 import { useForm } from "@tanstack/react-form";
-import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 
 import { useCart } from "@/hooks/cart.hook";
@@ -25,33 +24,21 @@ const labelClass = "mb-[6px] block text-[13px] font-medium text-[#052b24]";
 const cardClass =
   "rounded-[17px] border border-[#edf0ec] bg-white p-6 shadow-[0_1px_3px_rgba(15,45,30,0.10)]";
 
+// Available payment methods
 const paymentOptions = [
   {
     value: "CASH_ON_DELIVERY",
     title: "Cash on Delivery",
     description: "Pay when your food arrives",
-    enabled: true,
-  },
-  {
-    value: "SSLCOMMERZ",
-    title: "Card / Mobile Banking",
-    description: "via SSLCommerz",
-    enabled: false,
   },
   {
     value: "BKASH",
     title: "bKash",
     description: "Pay with your bKash account",
-    enabled: true,
-  },
-  {
-    value: "NAGAD",
-    title: "Nagad",
-    description: "Pay with your Nagad account",
-    enabled: false,
   },
 ] as const;
 
+// Field error component
 function FieldError({ errors }: { errors: readonly unknown[] }) {
   const error = getFieldError(errors);
 
@@ -64,6 +51,7 @@ function FieldError({ errors }: { errors: readonly unknown[] }) {
   );
 }
 
+// Step heading component
 function StepHeading({
   number,
   title,
@@ -97,8 +85,7 @@ function StepHeading({
 }
 
 export default function CheckoutForm() {
-  const { items } = useCart();
-  const queryClient = useQueryClient();
+  const { items, clearCart } = useCart();
 
   const orderMutation = useCreateOrder();
   const paymentMutation = useInitiatePayment();
@@ -107,6 +94,7 @@ export default function CheckoutForm() {
     id: string;
     orderNumber: string;
     paymentMethod: "CASH_ON_DELIVERY" | "BKASH";
+    guestToken: string | null;
   } | null>(null);
 
   const isSubmitting = orderMutation.isPending || paymentMutation.isPending;
@@ -120,6 +108,7 @@ export default function CheckoutForm() {
   const deliveryCharge = 0;
   const total = subtotal + deliveryCharge;
 
+  // Format price
   const formatPrice = (amount: number) => {
     return amount.toLocaleString("en-BD", {
       maximumFractionDigits: 2,
@@ -127,17 +116,32 @@ export default function CheckoutForm() {
   };
 
   // Start bKash checkout
-  const startBkashPayment = async (orderId: string) => {
-    const response = await paymentMutation.mutateAsync(orderId);
-    const url = response.data?.checkoutUrl;
+  const startBkashPayment = async (
+    orderId: string,
+    guestToken?: string | null,
+  ) => {
+    const response = await paymentMutation.mutateAsync({
+      orderId,
+      guestToken,
+    });
+
+    const payment = response.data;
+
+    if (!payment?.requiresOnlinePayment) {
+      throw new Error("Online payment is unavailable");
+    }
+
+    const url = payment.checkoutUrl;
 
     if (!url || !url.startsWith("https://")) {
       throw new Error("bKash checkout URL is unavailable");
     }
 
+    // Redirect customer to bKash payment page
     window.location.assign(url);
   };
 
+  // Checkout form
   const form = useForm({
     defaultValues: {
       fullName: "",
@@ -156,13 +160,14 @@ export default function CheckoutForm() {
     },
 
     onSubmit: async ({ value }) => {
+      if (completedOrder) return;
+
       if (items.length === 0) {
         toast.error("Your cart is empty");
         return;
       }
 
-      // Combine address fields because the backend
-      // accepts one deliveryAddress string
+      // Combine all delivery address fields
       const deliveryAddress = [
         value.address,
         value.addressLine2,
@@ -178,26 +183,32 @@ export default function CheckoutForm() {
         return;
       }
 
-      const couponCode = sessionStorage.getItem("freshlya-coupon");
-
-      const payload = {
-        customerName: value.fullName.trim(),
-        customerPhone: value.phone.trim(),
-        deliveryAddress,
-        paymentMethod: value.paymentMethod,
-        items: items.map((item) => ({
-          productId: item.productId,
-          quantity: item.quantity,
-        })),
-        ...(value.orderNote.trim() && {
-          orderNote: value.orderNote.trim(),
-        }),
-        ...(couponCode && {
-          couponCode,
-        }),
-      };
-
       try {
+        // Get applied coupon
+        const couponCode = sessionStorage.getItem("freshlya-coupon");
+
+        // Prepare order payload
+        const payload = {
+          customerName: value.fullName.trim(),
+          customerPhone: value.phone.trim(),
+          deliveryAddress,
+          paymentMethod: value.paymentMethod,
+
+          items: items.map((item) => ({
+            productId: item.productId,
+            quantity: item.quantity,
+          })),
+
+          ...(value.orderNote.trim() && {
+            orderNote: value.orderNote.trim(),
+          }),
+
+          ...(couponCode && {
+            couponCode,
+          }),
+        };
+
+        // Create order
         const response = await orderMutation.mutateAsync(payload);
 
         const order = response.data;
@@ -206,28 +217,39 @@ export default function CheckoutForm() {
           throw new Error("Order response is incomplete");
         }
 
-        // Save the order number for confirmation
-        setCompletedOrder({
+        // Save created order information
+        const orderData = {
           id: order.id,
           orderNumber: order.orderNumber,
           paymentMethod: value.paymentMethod,
-        });
+          guestToken: order.guestToken ?? null,
+        };
 
-        // bKash requires online payment
+        setCompletedOrder(orderData);
+
+        // bKash online payment
         if (value.paymentMethod === "BKASH") {
+          const pendingPayment = {
+            id: order.id,
+            orderNumber: order.orderNumber,
+            guestToken: order.guestToken ?? null,
+          };
+
+          sessionStorage.setItem(
+            "freshlya-pending-payment",
+            JSON.stringify(pendingPayment),
+          );
+
           try {
-            await startBkashPayment(order.id);
+            await startBkashPayment(order.id, pendingPayment.guestToken);
           } catch (error) {
             toast.error(getErrorMessage(error));
           }
 
           return;
         }
-
-        // Cash on Delivery order was created successfully
-        localStorage.setItem("freshlya-cart", "[]");
-
-        queryClient.setQueryData(["cart"], []);
+        // Cash on Delivery
+        clearCart();
 
         sessionStorage.removeItem("freshlya-coupon");
 
@@ -238,7 +260,7 @@ export default function CheckoutForm() {
     },
   });
 
-  // Show confirmation after creating an order
+  // Show order confirmation
   if (completedOrder) {
     const isBkash = completedOrder.paymentMethod === "BKASH";
 
@@ -256,24 +278,42 @@ export default function CheckoutForm() {
           {completedOrder.orderNumber}
         </p>
 
+        {/* Payment Method */}
+        <div className="mt-4 rounded-[12px] bg-[#edf7f1] p-4">
+          <p className="text-[12px] text-[#73817b]">Payment Method</p>
+
+          <p className="mt-1 text-[14px] font-semibold text-[#052b24]">
+            {isBkash ? "bKash" : "Cash on Delivery"}
+          </p>
+        </div>
+
         <p className="mt-4 text-[14px] text-[#52645b]">
           {isBkash
-            ? "Complete your bKash payment to finish paying for this order."
+            ? "Complete your bKash payment to confirm your order."
             : "Your order has been received. Please save your order number for tracking."}
         </p>
 
+        {/* Continue bKash Payment */}
         {isBkash ? (
           <button
             type="button"
             disabled={paymentMutation.isPending}
             onClick={async () => {
               try {
-                await startBkashPayment(completedOrder.id);
+                sessionStorage.setItem(
+                  "freshlya-pending-payment",
+                  JSON.stringify(completedOrder),
+                );
+
+                await startBkashPayment(
+                  completedOrder.id,
+                  completedOrder.guestToken,
+                );
               } catch (error) {
                 toast.error(getErrorMessage(error));
               }
             }}
-            className="mt-6 rounded-full bg-[#ffcc00] px-6 py-3 text-[14px] font-semibold text-[#052b24] disabled:opacity-60"
+            className="mt-6 rounded-full bg-[#ffcc00] px-6 py-3 text-[14px] font-semibold text-[#052b24] transition hover:bg-[#f2c200] disabled:cursor-not-allowed disabled:opacity-60"
           >
             {paymentMutation.isPending
               ? "Connecting to bKash..."
@@ -282,7 +322,7 @@ export default function CheckoutForm() {
         ) : (
           <Link
             href="/foods"
-            className="mt-6 inline-flex rounded-full bg-[#ffcc00] px-6 py-3 text-[14px] font-semibold text-[#052b24]"
+            className="mt-6 inline-flex rounded-full bg-[#ffcc00] px-6 py-3 text-[14px] font-semibold text-[#052b24] transition hover:bg-[#f2c200]"
           >
             Back to Menu
           </Link>
@@ -316,7 +356,7 @@ export default function CheckoutForm() {
             >
               Login
             </Link>{" "}
-            to use your saved addresses.
+            before placing your order.
           </div>
 
           <p className="mt-3 text-[12px] text-[#73817b]">
@@ -326,6 +366,7 @@ export default function CheckoutForm() {
           <div className="mt-5 space-y-[18px]">
             {/* Name and Mobile */}
             <div className="grid gap-4 sm:grid-cols-2">
+              {/* Full Name */}
               <form.Field name="fullName">
                 {(field) => (
                   <div>
@@ -353,6 +394,7 @@ export default function CheckoutForm() {
                 )}
               </form.Field>
 
+              {/* Mobile Number */}
               <form.Field name="phone">
                 {(field) => (
                   <div>
@@ -409,10 +451,6 @@ export default function CheckoutForm() {
                     onChange={(event) => field.handleChange(event.target.value)}
                     className={inputClass}
                   />
-
-                  <p className="mt-1 text-[11px] text-[#73817b]">
-                    We'll send your order receipt here.
-                  </p>
 
                   <FieldError errors={field.state.meta.errors} />
                 </div>
@@ -475,6 +513,7 @@ export default function CheckoutForm() {
 
             {/* City and Postal Code */}
             <div className="grid gap-4 sm:grid-cols-2">
+              {/* City */}
               <form.Field name="city">
                 {(field) => (
                   <div>
@@ -502,6 +541,7 @@ export default function CheckoutForm() {
                 )}
               </form.Field>
 
+              {/* Postal Code */}
               <form.Field name="postalCode">
                 {(field) => (
                   <div>
@@ -540,56 +580,54 @@ export default function CheckoutForm() {
 
           <form.Field name="paymentMethod">
             {(field) => (
-              <div className="mt-4 grid gap-3 sm:grid-cols-2">
-                {paymentOptions.map((option) => {
-                  const selected = field.state.value === option.value;
+              <div className="mt-4">
+                <div className="grid gap-3 sm:grid-cols-2">
+                  {paymentOptions.map((option) => {
+                    const selected = field.state.value === option.value;
 
-                  return (
-                    <label
-                      key={option.value}
-                      title={
-                        option.enabled
-                          ? undefined
-                          : "Payment method coming soon"
-                      }
-                      className={`flex min-h-[76px] items-center gap-3 rounded-[13px] border px-4 py-3 ${
-                        selected
-                          ? "border-2 border-[#08613f] bg-[#edf7f1]"
-                          : "border-[#e6ebe7] bg-white"
-                      } ${
-                        option.enabled ? "cursor-pointer" : "cursor-not-allowed"
-                      }`}
-                    >
-                      <input
-                        type="radio"
-                        name={field.name}
-                        value={option.value}
-                        checked={selected}
-                        disabled={!option.enabled}
-                        onBlur={field.handleBlur}
-                        onChange={() => {
-                          if (
-                            option.value === "CASH_ON_DELIVERY" ||
-                            option.value === "BKASH"
-                          ) {
-                            field.handleChange(option.value);
-                          }
-                        }}
-                        className="h-[14px] w-[14px] shrink-0 accent-[#08613f]"
-                      />
+                    return (
+                      <label
+                        key={option.value}
+                        className={`flex min-h-[76px] cursor-pointer items-center gap-3 rounded-[13px] border px-4 py-3 transition ${
+                          selected
+                            ? "border-2 border-[#08613f] bg-[#edf7f1]"
+                            : "border-[#e6ebe7] bg-white"
+                        }`}
+                      >
+                        <input
+                          type="radio"
+                          name={field.name}
+                          value={option.value}
+                          checked={selected}
+                          onBlur={field.handleBlur}
+                          onChange={() => field.handleChange(option.value)}
+                          className="h-[14px] w-[14px] shrink-0 accent-[#08613f]"
+                        />
 
-                      <span className="min-w-0">
-                        <span className="block text-[13px] font-medium text-[#052b24]">
-                          {option.title}
+                        <span className="min-w-0">
+                          <span className="block text-[13px] font-medium text-[#052b24]">
+                            {option.title}
+                          </span>
+
+                          <span className="block text-[12px] leading-5 text-[#73817b]">
+                            {option.description}
+                          </span>
                         </span>
+                      </label>
+                    );
+                  })}
+                </div>
 
-                        <span className="block text-[12px] leading-5 text-[#73817b]">
-                          {option.description}
-                        </span>
-                      </span>
-                    </label>
-                  );
-                })}
+                {/* Payment instruction */}
+                <div className="mt-4 rounded-[12px] bg-[#edf7f1] px-4 py-3">
+                  <p className="text-[12px] leading-5 text-[#52645b]">
+                    {field.state.value === "BKASH"
+                      ? "You will be redirected to the secure bKash payment page after placing your order."
+                      : "Pay for your order in cash when your food arrives."}
+                  </p>
+                </div>
+
+                <FieldError errors={field.state.meta.errors} />
               </div>
             )}
           </form.Field>
@@ -653,10 +691,11 @@ export default function CheckoutForm() {
 
         <div className="my-4 h-px bg-[#edf0ec]" />
 
-        {/* Subtotal */}
+        {/* Subtotal and Delivery Charge */}
         <div className="space-y-2 text-[13px]">
           <div className="flex justify-between gap-3">
             <span className="text-[#73817b]">Subtotal</span>
+
             <span className="font-medium text-[#052b24]">
               ৳{formatPrice(subtotal)}
             </span>
@@ -664,6 +703,7 @@ export default function CheckoutForm() {
 
           <div className="flex justify-between gap-3">
             <span className="text-[#73817b]">Delivery</span>
+
             <span className="font-medium text-[#052b24]">
               ৳{formatPrice(deliveryCharge)}
             </span>
@@ -688,16 +728,24 @@ export default function CheckoutForm() {
           Pre-order · we start cooking at 3PM tomorrow
         </div>
 
-        {/* Place Order */}
-        <button
-          type="submit"
-          disabled={isSubmitting || items.length === 0}
-          className="mt-4 flex h-[52px] w-full items-center justify-center rounded-full bg-[#ffcc00] text-[15px] font-semibold text-[#052b24] transition hover:bg-[#f2c200] disabled:cursor-not-allowed disabled:opacity-60"
-        >
-          {isSubmitting ? "Processing..." : "Place Pre-order"}
-        </button>
+        {/* Place Order Button */}
+        <form.Subscribe selector={(state) => state.values.paymentMethod}>
+          {(paymentMethod) => (
+            <button
+              type="submit"
+              disabled={isSubmitting || items.length === 0}
+              className="mt-4 flex h-[52px] w-full items-center justify-center rounded-full bg-[#ffcc00] text-[15px] font-semibold text-[#052b24] transition hover:bg-[#f2c200] disabled:cursor-not-allowed disabled:opacity-60"
+            >
+              {isSubmitting
+                ? "Processing..."
+                : paymentMethod === "BKASH"
+                  ? "Continue to bKash"
+                  : "Place Pre-order"}
+            </button>
+          )}
+        </form.Subscribe>
 
-        {/* Terms */}
+        {/* Terms and Conditions */}
         <p className="mt-3 text-center text-[11px] leading-4 text-[#73817b]">
           By placing your order you agree to our{" "}
           <span className="underline">Terms &amp; Conditions</span> and{" "}

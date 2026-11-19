@@ -98,7 +98,7 @@ export default function FoodsPage() {
         aria-label="Food categories"
         className="border-b border-[#dce8e0] bg-white"
       >
-        <div className="mx-auto flex min-h-[38px] max-w-[1248px] items-center justify-between gap-6 px-4">
+        <div className="mx-auto flex min-h-[45px] max-w-[1210px] items-center justify-between gap-6 px-4">
           <div className="flex min-w-0 items-center gap-7 overflow-x-auto whitespace-nowrap py-2 text-[14px]">
             <button
               type="button"
