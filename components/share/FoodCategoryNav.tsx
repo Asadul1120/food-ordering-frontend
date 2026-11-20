@@ -4,7 +4,6 @@ import Link from "next/link";
 
 import { useCategories } from "@/hooks/category.hook";
 
-
 type FoodCategoryNavProps = {
   selectedCategoryId?: string;
 };
@@ -26,7 +25,7 @@ export default function FoodCategoryNav({
   return (
     <nav
       aria-label="Food categories"
-      className="border-b border-[#dce8e0] bg-white"
+      className="hidden border-b border-[#dce8e0] bg-white lg:block"
     >
       <div className="mx-auto flex min-h-[45px] max-w-[1210px] items-center justify-between gap-6 px-4">
         {/* Left: Full Menu and Categories */}

@@ -115,7 +115,11 @@ export default function CartPage() {
         </section>
 
         {/* Right Side - Order Summary */}
-        <OrderSummary subtotal={subtotal} hasItems={items.length > 0} />
+        <OrderSummary
+          subtotal={subtotal}
+          hasItems={items.length > 0}
+          items={items}
+        />
       </div>
     </div>
   );

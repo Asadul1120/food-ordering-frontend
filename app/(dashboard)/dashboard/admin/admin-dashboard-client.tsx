@@ -7,6 +7,7 @@ import {
   CheckCircle2,
   ClipboardList,
   Clock3,
+  Tag,
   CreditCard,
   FolderOpen,
   Package,
@@ -19,7 +20,7 @@ import {
 
 import { getAdminOrders } from "@/api/admin.api";
 import { getAdminUsers } from "@/api/admin-user.api";
-
+import { useAdminCoupons } from "@/hooks/admin-coupon.hook";
 import { useAdminOrders, useAdminSummary } from "@/hooks/admin.hook";
 
 import { useAdminProducts } from "@/hooks/admin-product.hook";
@@ -116,6 +117,12 @@ export default function AdminDashboardClient() {
   const usersQuery = useAdminUsers({
     page: 1,
     limit: 5,
+  });
+
+  // Coupon count for dashboard
+  const couponsQuery = useAdminCoupons({
+    page: 1,
+    limit: 1,
   });
 
   // -------------------------------------------------
@@ -233,6 +240,7 @@ export default function AdminDashboardClient() {
     categoriesQuery.isFetching ||
     usersQuery.isFetching ||
     orderStatusQuery.isFetching ||
+    couponsQuery.isFetching ||
     userRoleQuery.isFetching;
 
   const refreshDashboard = () => {
@@ -302,6 +310,13 @@ export default function AdminDashboardClient() {
       color: "bg-cyan-50 text-cyan-700",
       href: "/dashboard/admin/users",
     },
+    {
+      title: "Total coupons",
+      value: couponsQuery.data?.pagination.totalCoupons,
+      icon: Tag,
+      color: "bg-pink-50 text-pink-700",
+      href: "/dashboard/admin/coupons",
+    },
   ];
 
   // -------------------------------------------------
@@ -345,6 +360,7 @@ export default function AdminDashboardClient() {
         productsQuery,
         categoriesQuery,
         usersQuery,
+        couponsQuery,
         orderStatusQuery,
         userRoleQuery,
       ].some((query) => query.isError) && (

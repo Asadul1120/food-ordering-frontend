@@ -1,42 +1,167 @@
 "use client";
 
+import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
+import { useRouter } from "next/navigation";
 
 import CartCouponForm from "@/components/form/cart-coupon-form";
-import { useRouter } from "next/navigation";
+
+import { useValidateCoupon } from "@/hooks/coupon.hook";
+
+import { getErrorMessage } from "@/lib/utils";
+
+import type { CartItem } from "@/hooks/cart.hook";
+import type { CouponValidationResult } from "@/types/coupon.type";
 
 type OrderSummaryProps = {
   subtotal: number;
   hasItems: boolean;
+  items: CartItem[];
 };
 
-// Screenshot-এর display values
 const FREE_DELIVERY_AMOUNT = 5000;
 const DELIVERY_STARTING_PRICE = 60;
+
+const COUPON_STORAGE_KEY = "freshlya-coupon";
 
 export default function OrderSummary({
   subtotal,
   hasItems,
+  items,
 }: OrderSummaryProps) {
-  // Free delivery পেতে আরও কত টাকা লাগবে
+  const router = useRouter();
+
+  const couponMutation = useValidateCoupon();
+
+  const [appliedCoupon, setAppliedCoupon] =
+    useState<CouponValidationResult | null>(null);
+
+  const [checkingSavedCoupon, setCheckingSavedCoupon] = useState(false);
+
+  // Prepare cart items for backend validation
+  const couponItems = useMemo(
+    () =>
+      items.map((item) => ({
+        productId: item.productId,
+        quantity: item.quantity,
+      })),
+    [items],
+  );
+
+  const validateCouponRequest = couponMutation.mutateAsync;
+
+  // Validate saved coupon when cart changes or page opens
+  useEffect(() => {
+    const savedCode = sessionStorage.getItem(COUPON_STORAGE_KEY);
+
+    if (!savedCode || items.length === 0) {
+      if (items.length === 0) {
+        sessionStorage.removeItem(COUPON_STORAGE_KEY);
+      }
+
+      setAppliedCoupon(null);
+      setCheckingSavedCoupon(false);
+      return;
+    }
+
+    let isCurrentRequest = true;
+
+    setAppliedCoupon(null);
+    setCheckingSavedCoupon(true);
+
+    validateCouponRequest({
+      code: savedCode,
+      items: couponItems,
+    })
+      .then((result) => {
+        if (!isCurrentRequest) return;
+
+        setAppliedCoupon(result);
+      })
+      .catch((error: unknown) => {
+        if (!isCurrentRequest) return;
+
+        sessionStorage.removeItem(COUPON_STORAGE_KEY);
+
+        setAppliedCoupon(null);
+
+        toast.error(
+          `Saved coupon is no longer valid: ${getErrorMessage(error)}`,
+        );
+      })
+      .finally(() => {
+        if (isCurrentRequest) {
+          setCheckingSavedCoupon(false);
+        }
+      });
+
+    return () => {
+      isCurrentRequest = false;
+    };
+  }, [items, couponItems, validateCouponRequest]);
+
+  // Apply coupon
+  const handleApplyCoupon = async (code: string) => {
+    if (!hasItems) {
+      toast.error("Add products to your cart before applying a coupon");
+      return;
+    }
+
+    try {
+      const result = await validateCouponRequest({
+        code,
+        items: couponItems,
+      });
+
+      // Save coupon for checkout
+      sessionStorage.setItem(COUPON_STORAGE_KEY, result.code);
+
+      setAppliedCoupon(result);
+
+      toast.success(`Coupon ${result.code} applied successfully`);
+    } catch (error) {
+      toast.error(getErrorMessage(error));
+    }
+  };
+
+  // Remove coupon
+  const handleRemoveCoupon = () => {
+    sessionStorage.removeItem(COUPON_STORAGE_KEY);
+
+    setAppliedCoupon(null);
+
+    toast.info("Coupon removed");
+  };
+
+  // Free delivery progress
   const remaining = Math.max(0, FREE_DELIVERY_AMOUNT - subtotal);
 
-  // Progress bar percentage
   const progress = Math.min((subtotal / FREE_DELIVERY_AMOUNT) * 100, 100);
 
+  // Format price
   const formatPrice = (price: number) => {
     return price.toLocaleString("en-BD", {
       maximumFractionDigits: 2,
     });
   };
 
-  // Coupon এখন সংরক্ষিত হবে, checkout-এ validate করতে হবে
-  const handleApplyCoupon = (code: string) => {
-    sessionStorage.setItem("freshlya-coupon", code);
+  // Backend-calculated totals
+  const displaySubtotal = appliedCoupon
+    ? Number(appliedCoupon.subtotal)
+    : subtotal;
 
-    toast.info("Coupon saved. It will be checked at checkout.");
-  };
-  const router = useRouter();
+  const displayDelivery = appliedCoupon
+    ? Number(appliedCoupon.deliveryCharge)
+    : null;
+
+  const displayTotal = appliedCoupon
+    ? Number(appliedCoupon.totalAmount)
+    : subtotal;
+
+  const displayDiscount = appliedCoupon
+    ? Number(appliedCoupon.discountAmount)
+    : 0;
+
   const handleCheckout = () => {
     router.push("/checkout");
   };
@@ -48,28 +173,52 @@ export default function OrderSummary({
       </h2>
 
       {/* Coupon Form */}
-      <CartCouponForm onApply={handleApplyCoupon} />
+      <CartCouponForm
+        onApply={handleApplyCoupon}
+        onRemove={handleRemoveCoupon}
+        appliedCode={appliedCoupon?.code ?? ""}
+        isApplying={couponMutation.isPending || checkingSavedCoupon}
+      />
 
-      {/* Subtotal and Delivery */}
+      {/* Price Details */}
       <div className="mt-5 space-y-2 text-[14px]">
         <div className="flex items-center justify-between gap-3">
           <span className="text-[#73817b]">Subtotal</span>
 
           <span className="font-medium text-[#27342e]">
-            ৳{formatPrice(subtotal)}
+            ৳{formatPrice(displaySubtotal)}
           </span>
         </div>
 
+        {/* Coupon Discount */}
+        {appliedCoupon && (
+          <div className="flex items-center justify-between gap-3">
+            <span className="text-[#08613f]">
+              {appliedCoupon.discountType === "FREE_DELIVERY"
+                ? "Free delivery coupon"
+                : `Coupon (${appliedCoupon.code})`}
+            </span>
+
+            <span className="font-semibold text-[#08613f]">
+              -৳{formatPrice(displayDiscount)}
+            </span>
+          </div>
+        )}
+
+        {/* Delivery */}
         <div className="flex items-center justify-between gap-3">
           <span className="text-[#73817b]">Delivery</span>
 
           <span className="font-medium text-[#27342e]">
-            from ৳{DELIVERY_STARTING_PRICE}
+            {displayDelivery === null
+              ? `from ৳${DELIVERY_STARTING_PRICE}`
+              : appliedCoupon?.discountType === "FREE_DELIVERY"
+                ? "Free"
+                : `৳${formatPrice(displayDelivery)}`}
           </span>
         </div>
       </div>
 
-      {/* Divider */}
       <div className="my-4 h-px bg-[#edf0ec]" />
 
       {/* Total */}
@@ -78,10 +227,12 @@ export default function OrderSummary({
 
         <p className="text-right">
           <span className="text-[19px] font-semibold text-[#052b24]">
-            ৳{formatPrice(subtotal)}
+            ৳{formatPrice(displayTotal)}
           </span>
 
-          <span className="ml-1 text-[12px] text-[#73817b]">+ delivery</span>
+          {!appliedCoupon && (
+            <span className="ml-1 text-[12px] text-[#73817b]">+ delivery</span>
+          )}
         </p>
       </div>
 
@@ -121,7 +272,7 @@ export default function OrderSummary({
       {/* Checkout Button */}
       <button
         type="button"
-        disabled={!hasItems}
+        disabled={!hasItems || checkingSavedCoupon}
         onClick={handleCheckout}
         className="mt-6 flex h-[52px] w-full items-center justify-center rounded-full bg-[#ffcc00] text-[16px] font-semibold text-[#052b24] transition hover:bg-[#f2c200] disabled:cursor-not-allowed disabled:opacity-60"
       >

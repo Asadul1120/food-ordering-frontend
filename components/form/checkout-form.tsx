@@ -1,12 +1,15 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useForm } from "@tanstack/react-form";
 import { toast } from "sonner";
 
 import { useCart } from "@/hooks/cart.hook";
 import { useCreateOrder, useInitiatePayment } from "@/hooks/order.hook";
+import { useValidateCoupon } from "@/hooks/coupon.hook";
+
+import type { CouponValidationResult } from "@/types/coupon.type";
 
 import {
   checkoutSchema,
@@ -89,6 +92,71 @@ export default function CheckoutForm() {
 
   const orderMutation = useCreateOrder();
   const paymentMutation = useInitiatePayment();
+  const couponMutation = useValidateCoupon();
+
+  // Store validated coupon information
+  const [appliedCoupon, setAppliedCoupon] =
+    useState<CouponValidationResult | null>(null);
+
+  const [checkingCoupon, setCheckingCoupon] = useState(false);
+
+  // Prepare cart items for coupon validation
+  const couponItems = useMemo(
+    () =>
+      items.map((item) => ({
+        productId: item.productId,
+        quantity: item.quantity,
+      })),
+    [items],
+  );
+
+  const validateCoupon = couponMutation.mutateAsync;
+
+  // Revalidate saved coupon when checkout opens or cart changes
+  useEffect(() => {
+    const savedCode = sessionStorage.getItem("freshlya-coupon");
+
+    if (!savedCode || items.length === 0) {
+      setAppliedCoupon(null);
+      setCheckingCoupon(false);
+      return;
+    }
+
+    let isCurrentRequest = true;
+
+    setAppliedCoupon(null);
+    setCheckingCoupon(true);
+
+    validateCoupon({
+      code: savedCode,
+      items: couponItems,
+    })
+      .then((result) => {
+        if (!isCurrentRequest) return;
+
+        setAppliedCoupon(result);
+
+        sessionStorage.setItem("freshlya-coupon", result.code);
+      })
+      .catch((error: unknown) => {
+        if (!isCurrentRequest) return;
+
+        sessionStorage.removeItem("freshlya-coupon");
+
+        setAppliedCoupon(null);
+
+        toast.error(`Coupon is no longer valid: ${getErrorMessage(error)}`);
+      })
+      .finally(() => {
+        if (isCurrentRequest) {
+          setCheckingCoupon(false);
+        }
+      });
+
+    return () => {
+      isCurrentRequest = false;
+    };
+  }, [items, couponItems, validateCoupon]);
 
   const [completedOrder, setCompletedOrder] = useState<{
     id: string;
@@ -97,16 +165,43 @@ export default function CheckoutForm() {
     guestToken: string | null;
   } | null>(null);
 
-  const isSubmitting = orderMutation.isPending || paymentMutation.isPending;
+  // Check whether any checkout operation is running
+  const isSubmitting =
+    orderMutation.isPending ||
+    paymentMutation.isPending ||
+    couponMutation.isPending ||
+    checkingCoupon;
 
-  // Current cart total
-  const subtotal = items.reduce((total, item) => {
+  // Calculate cart subtotal
+  const cartSubtotal = items.reduce((total, item) => {
     return total + Number(item.price) * item.quantity;
   }, 0);
 
-  // Backend currently sets delivery charge to zero
-  const deliveryCharge = 0;
-  const total = subtotal + deliveryCharge;
+  // Use backend-calculated values when coupon is applied
+  const subtotal = appliedCoupon
+    ? Number(appliedCoupon.subtotal)
+    : cartSubtotal;
+
+  const discountAmount = appliedCoupon
+    ? Number(appliedCoupon.discountAmount)
+    : 0;
+
+  const deliveryCharge = appliedCoupon
+    ? Number(appliedCoupon.deliveryCharge)
+    : 0;
+
+  const total = appliedCoupon
+    ? Number(appliedCoupon.totalAmount)
+    : cartSubtotal + deliveryCharge;
+
+  // Remove applied coupon
+  const handleRemoveCoupon = () => {
+    sessionStorage.removeItem("freshlya-coupon");
+
+    setAppliedCoupon(null);
+
+    toast.info("Coupon removed");
+  };
 
   // Format price
   const formatPrice = (amount: number) => {
@@ -184,8 +279,35 @@ export default function CheckoutForm() {
       }
 
       try {
-        // Get applied coupon
-        const couponCode = sessionStorage.getItem("freshlya-coupon");
+        // Get coupon code saved from cart page
+        let couponCode = sessionStorage.getItem("freshlya-coupon");
+
+        // Validate coupon again before creating order
+        // Backend will also validate and redeem it during order creation
+        if (couponCode) {
+          try {
+            const couponResult = await validateCoupon({
+              code: couponCode,
+              items: couponItems,
+            });
+
+            couponCode = couponResult.code;
+
+            sessionStorage.setItem("freshlya-coupon", couponCode);
+
+            setAppliedCoupon(couponResult);
+          } catch (error) {
+            sessionStorage.removeItem("freshlya-coupon");
+
+            setAppliedCoupon(null);
+
+            toast.error(
+              `Coupon could not be applied: ${getErrorMessage(error)}`,
+            );
+
+            return;
+          }
+        }
 
         // Prepare order payload
         const payload = {
@@ -227,6 +349,12 @@ export default function CheckoutForm() {
 
         setCompletedOrder(orderData);
 
+        // Backend has redeemed the coupon for this order
+        // Remove it so it cannot be used for another order
+        sessionStorage.removeItem("freshlya-coupon");
+
+        setAppliedCoupon(null);
+
         // bKash online payment
         if (value.paymentMethod === "BKASH") {
           const pendingPayment = {
@@ -248,10 +376,9 @@ export default function CheckoutForm() {
 
           return;
         }
+
         // Cash on Delivery
         clearCart();
-
-        sessionStorage.removeItem("freshlya-coupon");
 
         toast.success("Order placed successfully!");
       } catch (error) {
@@ -691,8 +818,43 @@ export default function CheckoutForm() {
 
         <div className="my-4 h-px bg-[#edf0ec]" />
 
-        {/* Subtotal and Delivery Charge */}
-        <div className="space-y-2 text-[13px]">
+        {/* Coupon Validation Loading */}
+        {checkingCoupon && (
+          <p className="mt-3 text-[12px] text-[#73817b]">
+            Checking your applied coupon...
+          </p>
+        )}
+
+        {/* Applied Coupon */}
+        {appliedCoupon && (
+          <div className="mt-4 flex items-center justify-between gap-3 rounded-[12px] bg-[#edf7f1] px-3 py-3">
+            <div className="min-w-0">
+              <p className="truncate text-[12px] font-semibold text-[#08613f]">
+                Coupon applied: {appliedCoupon.code}
+              </p>
+
+              <p className="mt-1 text-[11px] text-[#52645b]">
+                {appliedCoupon.discountType === "PERCENTAGE"
+                  ? "Percentage discount"
+                  : appliedCoupon.discountType === "FIXED"
+                    ? "Fixed amount discount"
+                    : "Free delivery coupon"}
+              </p>
+            </div>
+
+            <button
+              type="button"
+              onClick={handleRemoveCoupon}
+              disabled={isSubmitting}
+              className="shrink-0 text-[11px] font-semibold text-red-600 hover:underline disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              Remove
+            </button>
+          </div>
+        )}
+
+        {/* Subtotal, Discount and Delivery Charge */}
+        <div className="mt-4 space-y-2 text-[13px]">
           <div className="flex justify-between gap-3">
             <span className="text-[#73817b]">Subtotal</span>
 
@@ -701,11 +863,31 @@ export default function CheckoutForm() {
             </span>
           </div>
 
+          {/* Coupon Discount */}
+          {appliedCoupon && (
+            <div className="flex justify-between gap-3">
+              <span className="text-[#08613f]">
+                {appliedCoupon.discountType === "FREE_DELIVERY"
+                  ? "Free delivery"
+                  : "Coupon discount"}
+              </span>
+
+              <span className="font-semibold text-[#08613f]">
+                {appliedCoupon.discountType === "FREE_DELIVERY"
+                  ? "Applied"
+                  : `-৳${formatPrice(discountAmount)}`}
+              </span>
+            </div>
+          )}
+
+          {/* Delivery Charge */}
           <div className="flex justify-between gap-3">
             <span className="text-[#73817b]">Delivery</span>
 
             <span className="font-medium text-[#052b24]">
-              ৳{formatPrice(deliveryCharge)}
+              {appliedCoupon?.discountType === "FREE_DELIVERY"
+                ? "Free"
+                : `৳${formatPrice(deliveryCharge)}`}
             </span>
           </div>
         </div>

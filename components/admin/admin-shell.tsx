@@ -13,6 +13,7 @@ import {
   ShieldCheck,
   FolderTree,
   Users,
+  Tag,
   Menu,
   X,
 } from "lucide-react";
@@ -47,6 +48,11 @@ const adminLinks = [
     href: "/dashboard/admin/categories",
     label: "Manage categories",
     icon: FolderTree,
+  },
+  {
+    href: "/dashboard/admin/coupons",
+    label: "Manage coupons",
+    icon: Tag,
   },
   {
     href: "/foods",
