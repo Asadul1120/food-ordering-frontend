@@ -224,7 +224,7 @@ export default function MobileMenu({ onClose }: MobileMenuProps) {
 
               <div className="mt-4 grid grid-cols-2 gap-2">
                 <Link
-                  href="/profile"
+                  href={`${dashboardPath}/profile`}
                   onClick={onClose}
                   className="flex min-h-[44px] items-center justify-center gap-2 rounded-full bg-[#ffcc00] px-2 text-[13px] font-semibold text-[#052b24]"
                 >

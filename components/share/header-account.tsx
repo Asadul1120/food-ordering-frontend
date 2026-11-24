@@ -84,7 +84,7 @@ export default function HeaderAccount({
         </div>
 
         <Link
-          href="/profile"
+          href={`${dashboardPath}/profile`}
           onClick={onNavigate}
           className="flex items-center gap-3 rounded-lg px-3 py-3 text-sm hover:bg-[#18382b]"
         >
@@ -163,7 +163,7 @@ export default function HeaderAccount({
 
             {/* Profile */}
             <Link
-              href="/profile"
+              href={`${dashboardPath}/profile`}
               onClick={() => setIsOpen(false)}
               className="flex items-center gap-3 px-4 py-3 text-[14px] hover:bg-[#edf7f1]"
             >

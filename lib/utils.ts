@@ -33,7 +33,7 @@ export const roleRoutes = (role: string) => {
       return "/dashboard/staff";
 
     case "CUSTOMER":
-      return "/";
+      return "/customer";
 
     default:
       return "/";

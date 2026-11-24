@@ -1,3 +1,4 @@
+import { OrderStatus } from "./admin.type";
 
 export type PaymentMethod =
   | "CASH_ON_DELIVERY"
@@ -38,4 +39,41 @@ export interface PaymentInitiation {
   paymentStatus: string;
   requiresOnlinePayment: boolean;
   checkoutUrl: string | null;
+}
+
+
+
+export type TrackingOrderStatus =
+  | "PENDING"
+  | "CONFIRMED"
+  | "PREPARING"
+  | "READY"
+  | "OUT_FOR_DELIVERY"
+  | "DELIVERED"
+  | "CANCELLED";
+
+
+// Payment status for public tracking
+export type TrackingPaymentStatus =
+  | "PENDING"
+  | "PAID"
+  | "FAILED"
+  | "REFUNDED";
+
+// Public order tracking response
+export interface OrderTracking {
+  customerName: string;
+  customerPhone: string;
+  deliveryAddress: string;
+
+  orderNumber: string;
+  orderStatus: OrderStatus;
+
+  createdAt: string;
+  updatedAt: string;
+
+  payments: {
+    paymentStatus: TrackingPaymentStatus;
+    paidAt: string | null;
+  }[];
 }

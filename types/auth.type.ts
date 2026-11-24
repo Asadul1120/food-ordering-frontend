@@ -1,5 +1,14 @@
 export type UserRole = "ADMIN" | "STAFF" | "CUSTOMER";
 
+export interface UserProfile {
+  id: string;
+  userId: string;
+  deliveryAddress: string | null;
+  city: string | null;
+  area: string | null;
+  postalCode: string | null;
+}
+
 export interface AuthUser {
   id: string;
   name: string;
@@ -9,6 +18,7 @@ export interface AuthUser {
   isActive: boolean;
   createdAt: string;
   updatedAt?: string;
+  profile?: UserProfile | null;
 }
 
 export interface AuthTokens {
