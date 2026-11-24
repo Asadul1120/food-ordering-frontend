@@ -199,14 +199,6 @@ function WishlistReviewForm({
             </p>
           </div>
 
-          {/* Last Updated */}
-          <div>
-            <p className="text-xs text-[#73817b]">Last Updated</p>
-
-            <p className="mt-1 text-sm">
-              {formatAdminDate(wishlist.updatedAt)}
-            </p>
-          </div>
         </div>
       </div>
 

@@ -2,7 +2,7 @@
 
 import { useCallback, useState } from "react";
 import Link from "next/link";
-import { ShoppingCart, Menu } from "lucide-react";
+import { ShoppingCart, Menu, Heart } from "lucide-react";
 
 import Logo from "./logo";
 import CartCount from "./cart-count";
@@ -88,15 +88,15 @@ const Header = () => {
             >
               Foods
             </Link>
-
-            {/* Contact - Desktop Only */}
+            {/* Wishlist - Desktop Only */}
             <Link
-              href="/"
+              href="/wishlist"
               className="hidden items-center gap-2 text-sm font-semibold hover:text-yellow-400 md:flex"
             >
-              Contact Us
+            
+              Wishlist
             </Link>
-
+      
             {/* User Dropdown - Desktop Only */}
             <div className="hidden md:block">
               <HeaderAccount />
