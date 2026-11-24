@@ -2,12 +2,28 @@ import type { OrderStatus, AdminOrder } from "@/types/admin.type";
 
 export interface CustomerOrder extends AdminOrder {
   updatedAt: string;
-  orderItems: { id: string; productId: string; productName: string; productPrice: string; quantity: number; subtotal: string }[];
+  orderItems: {
+    id: string;
+    productId: string;
+    productName: string;
+    productPrice: string;
+    quantity: number;
+    subtotal: string;
+  }[];
 }
-export interface MyOrdersQuery { page: number; limit: number; orderStatus?: OrderStatus }
+export interface MyOrdersQuery {
+  page: number;
+  limit: number;
+  orderStatus?: OrderStatus;
+}
 export interface MyOrdersResponse {
   orders: CustomerOrder[];
-  pagination: { totalOrders: number; currentPage: number; totalPages: number; limit: number };
+  pagination: {
+    totalOrders: number;
+    currentPage: number;
+    totalPages: number;
+    limit: number;
+  };
 }
 export interface ProfilePayload {
   name?: string;
@@ -21,9 +37,11 @@ export interface WishlistPayload {
   foodName: string;
   foodDescription: string;
   expectedTime: string;
+
   customerName?: string;
   customerPhone?: string;
   customerEmail?: string;
+  customerAddress?: string;
 }
 export interface Wishlist {
   id: string;
@@ -36,5 +54,10 @@ export interface Wishlist {
 }
 export interface MyWishlistsResponse {
   wishlists: Wishlist[];
-  pagination: { totalWishlists: number; currentPage: number; totalPages: number; limit: number };
+  pagination: {
+    totalWishlists: number;
+    currentPage: number;
+    totalPages: number;
+    limit: number;
+  };
 }

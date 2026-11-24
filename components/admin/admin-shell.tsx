@@ -14,10 +14,10 @@ import {
   FolderTree,
   Users,
   Tag,
+  Heart,
   Menu,
   X,
 } from "lucide-react";
-
 import { toast } from "sonner";
 
 import { useGetMe, useLogout } from "@/hooks/auth.hook";
@@ -53,6 +53,11 @@ const adminLinks = [
     href: "/dashboard/admin/coupons",
     label: "Manage coupons",
     icon: Tag,
+  },
+  {
+    href: "/dashboard/admin/wishlists",
+    label: "Manage wishlist",
+    icon: Heart,
   },
   {
     href: "/foods",
