@@ -9,9 +9,13 @@ import CartCount from "./cart-count";
 import HeaderAccount from "./header-account";
 import MobileMenu from "./mobile-menu";
 import HeaderSearchForm from "@/components/share/HeaderSearchForm";
+import RestaurantStatus from "@/components/share/restaurant-status";
+import { useRestaurantSetting } from "@/hooks/restaurant-setting.hook";
 
 const Header = () => {
   const [menuOpen, setMenuOpen] = useState(false);
+
+  const setting = useRestaurantSetting().data?.data;
 
   const closeMenu = useCallback(() => {
     setMenuOpen(false);
@@ -25,12 +29,18 @@ const Header = () => {
           <div className="flex items-center gap-2 font-medium">
             <span className="h-2 w-2 rounded-full bg-[#42d98a]" />
 
-            <span>Open now · until 11 PM</span>
+            {/* <span>Open now · until 11 PM</span> */}
+            <RestaurantStatus />
           </div>
 
-          <p className="hidden md:block">
+          {/* <p className="hidden md:block">
             Delivery in Savar, Dhaka · bKash · Nagad · Cash on Delivery
-          </p>
+          </p> */}
+          {setting?.deliveryArea && (
+            <p className="hidden md:block">
+              Delivery in {setting.deliveryArea}
+            </p>
+          )}
 
           <div className="flex items-center gap-3">
             <button
@@ -40,12 +50,21 @@ const Header = () => {
               বাংলা
             </button>
 
-            <a
+            {/* <a
               href="tel:+8801000000000"
               className="font-semibold text-yellow-400"
             >
               Call us
-            </a>
+            </a> */}
+
+            {setting?.phone && (
+              <a
+                href={`tel:${setting.phone}`}
+                className="font-semibold text-yellow-400"
+              >
+                Call us
+              </a>
+            )}
           </div>
         </div>
       </div>
@@ -93,10 +112,9 @@ const Header = () => {
               href="/wishlist"
               className="hidden items-center gap-2 text-sm font-semibold hover:text-yellow-400 md:flex"
             >
-            
               Wishlist
             </Link>
-      
+
             {/* User Dropdown - Desktop Only */}
             <div className="hidden md:block">
               <HeaderAccount />

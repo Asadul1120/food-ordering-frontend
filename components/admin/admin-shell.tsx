@@ -17,6 +17,7 @@ import {
   Heart,
   Menu,
   X,
+  Settings,
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -58,6 +59,11 @@ const adminLinks = [
     href: "/dashboard/admin/wishlists",
     label: "Manage wishlist",
     icon: Heart,
+  },
+  {
+    href: "/dashboard/admin/restaurant-settings",
+    label: "Restaurant settings",
+    icon: Settings,
   },
   {
     href: "/foods",
