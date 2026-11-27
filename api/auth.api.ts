@@ -4,9 +4,9 @@ import type {
   AuthUser,
   LoginPayload,
   RegisterPayload,
+  VerifyLoginOtpData,
+  VerifyLoginOtpPayload,
 } from "@/types/auth.type";
-
-
 
 export const userRegister = (payload: RegisterPayload) => {
   return apiClient("/api/v1/auth/register", {
@@ -20,6 +20,16 @@ export const userLogin = (payload: LoginPayload) => {
     method: "POST",
     body: payload,
   });
+};
+
+export const verifyLoginOtp = (payload: VerifyLoginOtpPayload) => {
+  return apiClient<ApiResponse<VerifyLoginOtpData>>(
+    "/api/v1/auth/verify-login-otp",
+    {
+      method: "POST",
+      body: payload,
+    },
+  );
 };
 
 export const getMe = () => {

@@ -43,3 +43,32 @@ export interface ApiResponse<T = unknown> {
   message: string;
   data?: T;
 }
+
+
+export interface LoginOtpRequiredData {
+  requiresOtp: true;
+  email: string;
+  role: UserRole;
+}
+
+export interface LoginSuccessData {
+  requiresOtp?: false;
+  accessToken: string;
+  refreshToken: string;
+  role: UserRole;
+}
+
+export type LoginResultData =
+  | LoginOtpRequiredData
+  | LoginSuccessData;
+
+export interface VerifyLoginOtpPayload {
+  email: string;
+  otp: string;
+}
+
+export interface VerifyLoginOtpData {
+  accessToken: string;
+  refreshToken: string;
+  role: UserRole;
+}

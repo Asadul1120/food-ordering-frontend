@@ -16,6 +16,7 @@ import { useProductById, useProducts } from "@/hooks/product.hook";
 import { getErrorMessage } from "@/lib/utils";
 
 import type { Product } from "@/types/product.type";
+import FoodCategoryNav from "../share/FoodCategoryNav";
 
 // ============================================
 // PRICE FORMAT HELPER
@@ -215,33 +216,7 @@ export default function ProductDetails({ id }: { id: string }) {
       {/* CATEGORY NAVIGATION */}
       {/* ==================================== */}
 
-      {/* <nav
-        aria-label="Food categories"
-        className="border-b border-[#e9eee9] bg-white"
-      >
-        <div className="mx-auto flex min-h-[42px] max-w-[1100px] items-center justify-between gap-5 px-4 sm:px-5">
-          <div className="flex min-w-0 items-center gap-7 overflow-x-auto whitespace-nowrap py-3 text-[13px]">
-            <Link href="/foods" className="font-semibold text-[#08613f]">
-              Full Menu
-            </Link>
-
-            {categories.map((category) => (
-              <Link
-                key={category.id}
-                href={`/foods?categoryId=${category.id}`}
-                className="transition hover:text-[#08613f]"
-              >
-                {category.name}
-              </Link>
-            ))}
-          </div>
-
-          <div className="hidden shrink-0 items-center gap-6 text-[13px] md:flex">
-            <span>Track Order</span>
-            <span>Contact</span>
-          </div>
-        </div>
-      </nav> */}
+      <FoodCategoryNav />
 
       {/* ==================================== */}
       {/* MAIN CONTENT */}

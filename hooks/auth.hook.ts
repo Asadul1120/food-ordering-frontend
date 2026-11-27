@@ -1,4 +1,4 @@
-import { getMe, refreshToken, userLogin, userLogout, userRegister } from "@/api/auth.api";
+import { getMe, refreshToken, userLogin, userLogout, userRegister, verifyLoginOtp } from "@/api/auth.api";
 import {
   useMutation,
   useQuery,
@@ -27,6 +27,22 @@ export const useLogin = () => {
     mutationFn: userLogin,
     onSuccess: () => {
       return queryClient.invalidateQueries({
+        queryKey: ["user"],
+        exact: true,
+      });
+    },
+  });
+};
+
+// Verify Login OTP Hook
+export const useVerifyLoginOtp = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: verifyLoginOtp,
+
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({
         queryKey: ["user"],
         exact: true,
       });
