@@ -13,6 +13,7 @@ import { useProducts } from "@/hooks/product.hook";
 import { getErrorMessage } from "@/lib/utils";
 
 import type { PriceFilters, ProductQuery } from "@/types/product.type";
+import FoodCategoryNav from "@/components/share/FoodCategoryNav";
 
 const sortOptions: {
   value: string;
@@ -96,7 +97,7 @@ export default function FoodsPage() {
       {/* Menu navigation */}
       <nav
         aria-label="Food categories"
-        className="border-b border-[#dce8e0] bg-white"
+        className="border-b border-[#dce8e0] bg-white lg:sticky lg:top-[111px] lg:z-40"
       >
         <div className="mx-auto flex min-h-[45px] max-w-[1210px] items-center justify-between gap-6 px-4">
           <div className="flex min-w-0 items-center gap-7 overflow-x-auto whitespace-nowrap py-2 text-[14px]">

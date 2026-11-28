@@ -29,7 +29,7 @@ export default function RestaurantStatus() {
         aria-hidden="true"
         className={`size-2 rounded-full ${isOpen ? "bg-[#42d98a]" : "bg-[#f46a6a]"}`}
       />
-      {isOpen ? "Open now" : "Closed now · pre-orders open · we cook from 10 AM"}
+      {isOpen ? "Open now " : "Closed now · pre-orders open · we cook from 10 AM"}
     </span>
   );
 }

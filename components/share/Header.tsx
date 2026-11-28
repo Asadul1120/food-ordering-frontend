@@ -12,6 +12,7 @@ import HeaderSearchForm from "@/components/share/HeaderSearchForm";
 import RestaurantStatus from "@/components/share/restaurant-status";
 import { useRestaurantSetting } from "@/hooks/restaurant-setting.hook";
 
+
 const Header = () => {
   const [menuOpen, setMenuOpen] = useState(false);
 
@@ -22,12 +23,12 @@ const Header = () => {
   }, []);
 
   return (
-    <header className="w-full text-white">
+    <header className="fixed inset-x-0 top-0 z-50 w-full text-white">
       {/* Top Bar */}
       <div className="bg-[#02170f]">
         <div className="mx-auto flex h-[33px] max-w-[1220px] items-center justify-between px-4 text-xs">
           <div className="flex items-center gap-2 font-medium">
-            <span className="h-2 w-2 rounded-full bg-[#42d98a]" />
+           
 
             {/* <span>Open now · until 11 PM</span> */}
             <RestaurantStatus />
@@ -49,13 +50,6 @@ const Header = () => {
             >
               বাংলা
             </button>
-
-            {/* <a
-              href="tel:+8801000000000"
-              className="font-semibold text-yellow-400"
-            >
-              Call us
-            </a> */}
 
             {setting?.phone && (
               <a
@@ -92,29 +86,6 @@ const Header = () => {
 
           {/* Right Actions */}
           <div className="ml-auto flex shrink-0 items-center gap-3 md:gap-6">
-            {/* Home - Desktop Only */}
-            <Link
-              href="/"
-              className="hidden items-center gap-2 text-sm font-semibold hover:text-yellow-400 md:flex"
-            >
-              Home
-            </Link>
-
-            {/* Foods - Desktop Only */}
-            <Link
-              href="/foods"
-              className="hidden items-center gap-2 text-sm font-semibold hover:text-yellow-400 md:flex"
-            >
-              Foods
-            </Link>
-            {/* Wishlist - Desktop Only */}
-            <Link
-              href="/wishlist"
-              className="hidden items-center gap-2 text-sm font-semibold hover:text-yellow-400 md:flex"
-            >
-              Wishlist
-            </Link>
-
             {/* User Dropdown - Desktop Only */}
             <div className="hidden md:block">
               <HeaderAccount />
@@ -135,6 +106,7 @@ const Header = () => {
       </div>
 
       {/* Mobile Drawer */}
+      
       {menuOpen && <MobileMenu onClose={closeMenu} />}
     </header>
   );
